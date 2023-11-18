@@ -846,4 +846,59 @@ class Gamma:
             v.append(Gamma.random(self))
         return v
 
+class SDE:
+#     params: parametros iniciales en un diccionario
+#     s0: valor inicial del proceso
+#     mu, sigma: deriva y difución en sympy
+    def __init__(self, parametros, s0, mu, sigma):
+        self.parametros = parametros
+        self.T = T
+        self.n = n
+        self.s0 = s0
+        self.mu = mu
+        self.sigma = sigma
+    
+    def euler(self, T, n, n_simulaciones):
+        
+        dt = T / n
+        
+        
+        for j in range(n_simulaciones):
+            valores = normal(0, 1).randoms(n)
+            proceso = [self.s0]
+            valores_dt = [dt]
+            s0_sim = self.s0
+            delta_t = dt
+            for i in range(1, len(valores)):
+                
+                si = s0_sim + mu.subs({**parametros, S:s0_sim, t:delta_t})*dt + sigma.subs({**parametros, S:s0_sim, t:delta_t})*valores[i]*np.sqrt(dt)
+                proceso.append(si)
+                s0_sim = si
+                delta_t += dt
+                valores_dt.append(dt*(i+1))
+                
+            x = np.arange(1, len(proceso)+1)
+            plt.plot(valores_dt, proceso)
+        plt.grid
+        
+    def milstein(self, T, n, n_simulaciones):
 
+        dt = T / n
+        for j in range(n_simulaciones):
+            valores = normal(0, 1).randoms(n)
+            proceso = [self.s0]
+            valores_dt = [dt]
+            s0_sim = self.s0
+            delta_t = dt
+            for i in range(1, len(valores)):
+
+                si = s0_sim + mu.subs({**parametros, S:s0_sim,  t:delta_t})*dt + sigma.subs({**parametros, S:s0_sim,  t:delta_t})*valores[i]*np.sqrt(dt) + 1/2 * sp.diff(sigma, S).subs({**parametros, S:s0_sim, t:delta_t}) * sigma.subs({**parametros, S:s0_sim, t:delta_t}) * dt * (valores[i]**2 - 1)          
+                proceso.append(si)
+                s0_sim = si
+                delta_t += dt
+
+                valores_dt.append(dt*(i+1))
+
+            x = np.arange(1, len(proceso)+1)
+            plt.plot(valores_dt, proceso)
+        plt.grid()
