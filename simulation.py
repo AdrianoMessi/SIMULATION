@@ -902,3 +902,76 @@ class SDE:
             x = np.arange(1, len(proceso)+1)
             plt.plot(valores_dt, proceso)
         plt.grid()
+
+class poiss_process:
+    def _init_(self,l,t,sim_ts):
+        self.l=l
+        self.t=t
+        self.sim_ts=sim_ts
+        
+    def rand(self):
+        t1=-math.log(random())/self.l
+        cont=0
+        acm=t1
+        lst=[]
+    while acm<=self.t:
+        lst.append(acm)
+        t2=-math.log(random())/self.l
+        acm+=t2
+        cont+=1
+    if self.sim_ts==True:
+        return lst
+    else:
+        return cont
+    
+    def sample(self,n):
+        self.sim_ts==False
+        lst=[]
+        for i in range(n):
+            lst.append(self.rand())
+        return lst
+    
+class poiss_nohom:
+    def _init_(self,T,max,sim_ts):
+        self.T=T
+        self.max=max
+        self.sim_ts=sim_ts
+        
+    def rand(self):
+        lst=[]
+        acm=0
+        cont=0
+        while acm<self.T:
+            u=uniforme_cont(0,1).rand()
+            v=uniforme_cont(0,1).rand()
+            t=-math.log(u)/self.max
+            if v<t :
+                acm+=t
+                lst.append(t)
+                cont+=1
+        if self.sim_ts==True:
+            return lst
+        else:
+            return cont
+        
+    def sample(self,n):
+        self.sim_ts==False
+        lst=[]
+        for i in range(n):
+            lst.append(self.rand())
+        return lst
+    
+class poiss_comp:
+    def _init_(self,l,t,s):
+        self.l=l
+        self.t=t
+        self.s=s
+    def rand(self):
+        n=poiss_process(self.t,self.l,sim_ts=False).rand()
+        z=norm(0,self.s).sample(n)
+        return np.sum(z)
+    def sample(self,n):
+        lst=[]
+        for i in range(n):
+            lst.append(self.rand())
+        return lst
