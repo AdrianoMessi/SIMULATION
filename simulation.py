@@ -208,9 +208,6 @@ class Distribuciones:
 
     def masanbinom(r, p, x):
         return math.comb(x + r - 1, x) * (1-p)**x * p**r
-
-    def masapoisson():
-        pass
     
 
     
@@ -396,7 +393,7 @@ class GSM4:
             return x / 2**4
     
     
-    def muestra(self,n):
+    def randoms(self,n):
         if n>=2**4:
             print("no es posible generar una muestra de tamaño: ",n)
         else:
@@ -431,7 +428,7 @@ class GSM8:
             self.semilla = x 
         return x / 2**8
     
-    def muestra(self, n):
+    def randoms(self, n):
         if n >= 2 ** 8:
             print("no es posible generar una muestra de tamaño: ", n)
         else:
@@ -465,7 +462,7 @@ class GSM16:
             self.semilla = x
         return x / 2**16
     
-    def muestra(self, n):
+    def randoms(self, n):
         if n >= 2 ** 16:
             print("no es posible generar una muestra de tamaño: ", n)
         else:
@@ -473,41 +470,6 @@ class GSM16:
             for i in range(0, n):
                 l.append(self.random())
             return l
-
-class GSM32:
-    def __init__(self, seed):
-        self.semilla = seed
-    
-    def random(self):
-        if self.semilla >= 2 ** 32:
-            print("inserte una semilla menor a ", 2 ** 32)
-        else:
-            a = []
-            for i in range(0, 32):
-                r = self.semilla % 2
-                q = self.semilla // 2
-                a.append(r)
-                self.semilla = q
-            a.reverse()
-            s1 = a[0] + a[25] + a[27] + a[29] + a[30] + a[31]
-            b = s1 % 2
-            del a[0]
-            a.append(b)
-            x = 0
-            for i in range(0, len(a)):
-                x += a[i] * 2 ** (len(a) - (i + 1))
-            self.semilla = x
-        return x / 2**32
-    
-    def muestra(self, n):
-        if n >= 2 ** 32:
-            print("no es posible generar una muestra de tamaño: ", n)
-        else:
-            l = []
-            for i in range(0, n):
-                l.append(self.random())
-            return l
-
 
 class UnifCont:
     def __init__(self, a, b):
@@ -596,7 +558,7 @@ class Norm:
                 v.extend(self.random())
         return v
 
-class Jicuad:
+class Chisq:
     def __init__(self, df):
         self.df = df
     
@@ -621,17 +583,17 @@ class Jicuad:
         v = []
         if k == 1:
             for i in range(0, self.df // 2):
-                v.extend(Jicuad.Z2(self))
-            v.append(Jicuad.Z2(self)[0])
+                v.extend(Chisq.Z2(self))
+            v.append(Chisq.Z2(self)[0])
         else:
             for i in range(0, self.df // 2):
-                v.extend(Jicuad.Z2(self))
+                v.extend(Chisq.Z2(self))
         return np.sum(v)
     
     def muestra(self, m):
         M = []
         for i in range(0, m):
-            M.append(Jicuad.random(self))
+            M.append(Chisq.random(self))
         return M
 
 
@@ -758,7 +720,7 @@ class Normacot:
         return z1
     
     def random(self):
-        z = Nacot.Z()
+        z = Normacot.Z()
         while abs(z) > self.acot:
             z = Normacot.Z(self)
         return z
@@ -766,7 +728,7 @@ class Normacot:
     def muestra(self, n):
         v = []
         for i in range(0, n):
-            v.append(Nacot.random(self))
+            v.append(Normacot.random(self))
         return v
 
 
@@ -846,44 +808,49 @@ class Gamma:
             v.append(Gamma.random(self))
         return v
 
+
+
 class SDE:
-#     params: parametros iniciales en un diccionario
-#     s0: valor inicial del proceso
-#     mu, sigma: deriva y difución en sympy
     def __init__(self, parametros, s0, mu, sigma):
         self.parametros = parametros
-        self.T = T
-        self.n = n
         self.s0 = s0
         self.mu = mu
         self.sigma = sigma
     
     def euler(self, T, n, n_simulaciones):
-        
+        plt.figure(figsize=(15, 5))
         dt = T / n
         
-        
+        trayectorias = []
         for j in range(n_simulaciones):
             valores = normal(0, 1).randoms(n)
             proceso = [self.s0]
             valores_dt = [dt]
             s0_sim = self.s0
             delta_t = dt
+
             for i in range(1, len(valores)):
-                
                 si = s0_sim + mu.subs({**parametros, S:s0_sim, t:delta_t})*dt + sigma.subs({**parametros, S:s0_sim, t:delta_t})*valores[i]*np.sqrt(dt)
                 proceso.append(si)
                 s0_sim = si
                 delta_t += dt
                 valores_dt.append(dt*(i+1))
-                
             x = np.arange(1, len(proceso)+1)
+            
+            trayectorias.append(proceso)
             plt.plot(valores_dt, proceso)
-        plt.grid
+        
+        plt.title('Euler simulation', fontsize=16)
+        plt.xlabel('Tiempos', fontsize=12)
+        plt.ylabel('Precio', fontsize=12)
+        plt.grid()
+        return trayectorias
+
         
     def milstein(self, T, n, n_simulaciones):
-
+        plt.figure(figsize=(15, 5))
         dt = T / n
+        trayectorias = []
         for j in range(n_simulaciones):
             valores = normal(0, 1).randoms(n)
             proceso = [self.s0]
@@ -891,17 +858,21 @@ class SDE:
             s0_sim = self.s0
             delta_t = dt
             for i in range(1, len(valores)):
-
                 si = s0_sim + mu.subs({**parametros, S:s0_sim,  t:delta_t})*dt + sigma.subs({**parametros, S:s0_sim,  t:delta_t})*valores[i]*np.sqrt(dt) + 1/2 * sp.diff(sigma, S).subs({**parametros, S:s0_sim, t:delta_t}) * sigma.subs({**parametros, S:s0_sim, t:delta_t}) * dt * (valores[i]**2 - 1)          
                 proceso.append(si)
                 s0_sim = si
                 delta_t += dt
-
                 valores_dt.append(dt*(i+1))
-
             x = np.arange(1, len(proceso)+1)
+            trayectorias.append(proceso)
             plt.plot(valores_dt, proceso)
+            
+        plt.title('Milstein simulation', fontsize=16)
+        plt.xlabel('Tiempos', fontsize=12)
+        plt.ylabel('Precio', fontsize=12)
         plt.grid()
+        return trayectorias
+
 
 class poiss_process:
     def _init_(self,l,t,sim_ts):
@@ -910,13 +881,13 @@ class poiss_process:
         self.sim_ts=sim_ts
         
     def rand(self):
-        t1=-math.log(random())/self.l
+        t1=-math.log(random.random())/self.l
         cont=0
         acm=t1
         lst=[]
     while acm<=self.t:
         lst.append(acm)
-        t2=-math.log(random())/self.l
+        t2=-math.log(random.random())/self.l
         acm+=t2
         cont+=1
     if self.sim_ts==True:
@@ -942,8 +913,8 @@ class poiss_nohom:
         acm=0
         cont=0
         while acm<self.T:
-            u=uniforme_cont(0,1).rand()
-            v=uniforme_cont(0,1).rand()
+            u=random.random()
+            v=random.random()
             t=-math.log(u)/self.max
             if v<t :
                 acm+=t
@@ -968,7 +939,7 @@ class poiss_comp:
         self.s=s
     def rand(self):
         n=poiss_process(self.t,self.l,sim_ts=False).rand()
-        z=norm(0,self.s).sample(n)
+        z=Norm(0,self.s).muestra(n)
         return np.sum(z)
     def sample(self,n):
         lst=[]
