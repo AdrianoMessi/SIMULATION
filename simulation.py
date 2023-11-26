@@ -918,8 +918,10 @@ class poiss_process:
         lista = []
         for i in range(n):
             lista.append(self.rand())
-        return lista
-    
+
+        return lista
+
+
 class poiss_nohom:
     def __init__(self,T,max,sim_ts):
         self.T=T
