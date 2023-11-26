@@ -950,7 +950,7 @@ class poiss_nohom:
         lista=[]
         for i in range(n):
             lista.append(self.rand())
-        return lista
+        return lista
     
 class poiss_comp:
     def __init__(self,l,t,s):
@@ -965,7 +965,7 @@ class poiss_comp:
         lista=[]
         for i in range(n):
             lista.append(self.rand())
-        return lista
+        return lista
 
 def wiener(simulaciones, n, t):
     trayectorias = []
@@ -1068,7 +1068,7 @@ class series:
                 F = np.reshape(I, (1, self.k ** self.d))
                 t = np.sum((F - (m / self.k ** self.d)) ** 2) * (self.k ** self.d / m)
                 alpha = 1 - self.confianza
-                valor_c = sc.stats.chi2.ppf(q=1 - alpha, df=self.k ** self.d - 1)
+                valor_c = scipy.stats.chi2.ppf(q=1 - alpha, df=self.k ** self.d - 1)
                 if t > valor_c:
                     resp = 'se rechaza la hipótesis'
                 else:
@@ -1081,7 +1081,7 @@ class series:
                 F = np.reshape(I, (1, self.k ** self.d))
                 t = np.sum((F - (m / self.k ** self.d)) ** 2) * (self.k ** self.d / m)
                 alpha = 1 - self.confianza
-                valor_c = sc.stats.chi2.ppf(q=1 - alpha, df=self.k ** self.d - 1)
+                valor_c = scipy.stats.chi2.ppf(q=1 - alpha, df=self.k ** self.d - 1)
                 if t > valor_c:
                     resp = 'se rechaza la hipótesis'
                 else:
@@ -1097,7 +1097,7 @@ class series:
 
 def prueba_correlacion(U,desplazamiento,confianza):
     n = len(U)
-    h = mt.floor((n-1-desplazamiento)/desplazamiento)
+    h = math.floor((n-1-desplazamiento)/desplazamiento)
 
     #Estimadores
     suma = 0
@@ -1110,7 +1110,7 @@ def prueba_correlacion(U,desplazamiento,confianza):
   #Estadístico
     alfa = 1-confianza
     estadistico = estimador_corr/np.sqrt(var_estimador_corr)
-    Z = sc.stats.norm.ppf(1-alfa/2)
+    Z = scipy.stats.norm.ppf(1-alfa/2)
 
     #Prueba de Hipótesis
     if abs(estadistico) < Z:
@@ -1131,30 +1131,30 @@ class frecuencia:
             increm=1/self.k
             f=np.zeros(self.k)
             acum=[]
-        for i in range(0,self.n):
-            boleano=1
-            interv=0
-            cont=0
-            while boleano==1:
-                if interv<=self.m[i]<=interv+increm:
-                    boleano=0
-                else:
-                    boleano=1
-                interv+=increm
-            cont+=1
-            acum.append(cont)
-        for i in range(0,self.k):
-            f[i]=acum.count(i+1)
-        t=np.sum((f-(self.n/self.k))**2)*(self.k/self.n)
-        valor_c=sc.stats.chi2.ppf(q=1- alpha, df=self.k-1)
-        if t>valor_c:
-            resp='se rechaza la hipótesis'
+            for i in range(0,self.n):
+                boleano=1
+                interv=0
+                cont=0
+                while boleano==1:
+                    if interv<=self.m[i]<=interv+increm:
+                        boleano=0
+                    else:
+                        boleano=1
+                    interv+=increm
+                cont+=1
+                acum.append(cont)
+            for i in range(0,self.k):
+                f[i]=acum.count(i+1)
+            t=np.sum((f-(self.n/self.k))**2)*(self.k/self.n)
+            valor_c=scipy.stats.chi2.ppf(q=1- alpha, df=self.k-1)
+            if t>valor_c:
+                resp='se rechaza la hipótesis'
+            else:
+                resp='no se rechaza la hipótesis'
         else:
-            resp='no se rechaza la hipótesis'
-    else:
-        resp="eliga un tamaño de muestra adecuado"
-        t="eliga un tamaño de muestra adecuado"
-        valor_c="eliga un tamaño de muestra adecuado"
-    return (resp,t,valor_c)
+            resp="eliga un tamaño de muestra adecuado"
+            t="eliga un tamaño de muestra adecuado"
+            valor_c="eliga un tamaño de muestra adecuado"
+        return (resp,t,valor_c)
 
 
