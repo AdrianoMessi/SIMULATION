@@ -902,14 +902,14 @@ class poiss_process:
         t1=-math.log(random.random())/self.l
         cont=0
         acm=t1
-        lst=[]
+        lista=[]
         while acm<=self.t:
-            lst.append(acm)
+            lista.append(acm)
             t2=-math.log(random.random())/self.l
             acm+=t2
             cont+=1
         if self.sim_ts==True:
-            return lst
+            return lista
         else:
             return cont
     
