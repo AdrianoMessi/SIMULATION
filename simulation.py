@@ -988,3 +988,171 @@ def wiener(simulaciones, n, t):
     plt.grid()
 
 
+
+
+class Valuacion_Opciones:
+    def __init__(self, r, sigma, dt, T, S0):
+        self.r = r
+        self.sigma = sigma
+        self.dt = dt
+        self.T = T
+        self.S0 = S0
+
+    def rand(self):
+        N = int(self.T/self.dt)
+        u = np.exp(self.sigma*np.sqrt(self.dt))
+        d = 1/u
+        p = (np.exp(self.r*self.dt)-d)/(u-d)
+
+        precio = np.zeros(N+1)
+        precio[0] = self.S0
+        generador = Bernoulli_distribution(p)
+        for i in range(1, N+1):
+            bernoulli = generador.rand()
+            if bernoulli == 1:
+                precio[i] = u*precio[i-1]
+            else:
+                precio[i] = d*precio[i-1]
+
+        time = np.cumsum(np.concatenate(([0], [self.dt for i in range(N)])))
+        plt.grid()
+        plt.plot(time, precio, color='r')
+        return precio[len(precio)-1]
+
+    def muestra(self, n):
+        X = []
+        for i in range(n):
+            Y = Valuacion_Opciones(self.r, self.sigma, self.dt, self.T, self.S0)
+            X.append(Y.rand())
+        return np.mean(X)
+
+
+
+
+
+
+
+
+class series:
+    def __init__(self, confianza, muestra, d, k):
+        self.d = d
+        self.confianza = confianza
+        self.k = k
+        self.muestra = np.array(muestra)
+        self.n = len(self.muestra)
+    def prueba(self):
+        m = self.n // self.d
+ 
+        # Verificamos que el tamaño de m sea el adecuado
+        if (self.k ** self.d) * 10 <= m and m <= (self.k ** self.d) * 100:
+            r = self.n % self.d
+ 
+            # Quitamos valores de la muestra para que se pueda cambiar su forma
+            if r != 0:
+                if r == 1:
+                    muest = np.delete(self.muestra, self.n - 1)
+                else:
+                    muest = np.delete(self.muestra, (self.n - 1, self.n - 2))
+                U = np.reshape(muest, (m, self.d))
+            else:
+                U = np.reshape(self.muestra, (m, self.d))
+ 
+            # Averiguamos el tamaño de la dimensión
+            # Dimensión 2
+            if self.d == 2:
+                I = np.zeros((self.k, self.k))
+                for i in range(0, m):
+                    I[math.floor(U[i, 0] * self.k), math.floor(self.k * U[i, 1])] += 1
+                F = np.reshape(I, (1, self.k ** self.d))
+                t = np.sum((F - (m / self.k ** self.d)) ** 2) * (self.k ** self.d / m)
+                alpha = 1 - self.confianza
+                valor_c = sc.stats.chi2.ppf(q=1 - alpha, df=self.k ** self.d - 1)
+                if t > valor_c:
+                    resp = 'se rechaza la hipótesis'
+                else:
+                    resp = 'no se rechaza la hipótesis'
+            # Dimensión 3
+            else:
+                I = np.zeros((self.k, self.k, self.k))
+                for i in range(0, m):
+                    I[math.floor(U[i, 0] * self.k), math.floor(self.k * U[i, 1]), math.floor(self.k * U[i, 2])] += 1
+                F = np.reshape(I, (1, self.k ** self.d))
+                t = np.sum((F - (m / self.k ** self.d)) ** 2) * (self.k ** self.d / m)
+                alpha = 1 - self.confianza
+                valor_c = sc.stats.chi2.ppf(q=1 - alpha, df=self.k ** self.d - 1)
+                if t > valor_c:
+                    resp = 'se rechaza la hipótesis'
+                else:
+                    resp = 'no se rechaza la hipótesis'
+ 
+        # Caso distinto
+        else:
+            resp = "eliga un tamaño de muestra adecuado"
+            t = "eliga un tamaño de muestra adecuado"
+            valor_c = "eliga un tamaño de muestra adecuado"
+ 
+        return resp, t, valor_c
+
+def prueba_correlacion(U,desplazamiento,confianza):
+    n = len(U)
+    h = mt.floor((n-1-desplazamiento)/desplazamiento)
+
+    #Estimadores
+    suma = 0
+    for k in range(h+1):
+        suma += U[k*desplazamiento]*U[(k+1)*desplazamiento]
+    estimador_cov = 1/(h+1)*suma-1/4
+    estimador_corr = 12*estimador_cov
+    var_estimador_corr = (13*h+7)/((h+1)**2)
+
+  #Estadístico
+    alfa = 1-confianza
+    estadistico = estimador_corr/np.sqrt(var_estimador_corr)
+    Z = sc.stats.norm.ppf(1-alfa/2)
+
+    #Prueba de Hipótesis
+    if abs(estadistico) < Z:
+        return "No se rechaza H0"
+    else:
+        return "Se rechaza H0"
+
+
+class frecuencia:
+    def __init__(self,confianza,muestra,k):
+        self.conf=confianza
+        self.m=np.array(muestra)
+        self.n=len(self.m)
+        self.k=k
+    def prueba(self):
+        if self.k*10<= self.n and self.n<=self.k*100:
+            alpha=1-self.conf
+            increm=1/self.k
+            f=np.zeros(self.k)
+            acum=[]
+        for i in range(0,self.n):
+            boleano=1
+            interv=0
+            cont=0
+            while boleano==1:
+                if interv<=self.m[i]<=interv+increm:
+                    boleano=0
+                else:
+                    boleano=1
+                interv+=increm
+            cont+=1
+            acum.append(cont)
+        for i in range(0,self.k):
+            f[i]=acum.count(i+1)
+        t=np.sum((f-(self.n/self.k))**2)*(self.k/self.n)
+        valor_c=sc.stats.chi2.ppf(q=1- alpha, df=self.k-1)
+        if t>valor_c:
+            resp='se rechaza la hipótesis'
+        else:
+            resp='no se rechaza la hipótesis'
+    else:
+        resp="eliga un tamaño de muestra adecuado"
+        t="eliga un tamaño de muestra adecuado"
+        valor_c="eliga un tamaño de muestra adecuado"
+    return (resp,t,valor_c)
+
+
