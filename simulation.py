@@ -964,3 +964,27 @@ class poiss_comp:
         for i in range(n):
             lst.append(self.rand())
         return lst
+
+def wiener(simulaciones, n, t):
+    trayectorias = []
+    for i in range(simulaciones):
+        dt = 1 / n
+        dx = 1 / np.sqrt(n)
+        p = 0.5
+        q = 1 - p
+        tiempos = np.arange(0, math.floor(n*t)+1)*dt
+        X = random.choices([-1, 1], [q, p], k=math.floor(n*t))
+        W_0 = 0
+        W_t = [W_0]
+        W_t.extend(np.cumsum(X)*dx)
+        trayectorias.append(np.array(W_t))
+
+    trayectorias = np.array(trayectorias)
+
+
+    plt.figure(figsize=(15,5))
+    for i in range(simulaciones):
+        plt.plot(tiempos, trayectorias[i], lw=1, ms=1)
+    plt.grid()
+
+
