@@ -1068,7 +1068,7 @@ class series:
                 F = np.reshape(I, (1, self.k ** self.d))
                 t = np.sum((F - (m / self.k ** self.d)) ** 2) * (self.k ** self.d / m)
                 alpha = 1 - self.confianza
-                valor_c = scipy.stats.chi2.ppf(q=1 - alpha, df=self.k ** self.d - 1)
+                valor_c = stats.chi2.ppf(q=1 - alpha, df=self.k ** self.d - 1)
                 if t > valor_c:
                     resp = 'se rechaza la hipótesis'
                 else:
@@ -1081,7 +1081,7 @@ class series:
                 F = np.reshape(I, (1, self.k ** self.d))
                 t = np.sum((F - (m / self.k ** self.d)) ** 2) * (self.k ** self.d / m)
                 alpha = 1 - self.confianza
-                valor_c = scipy.stats.chi2.ppf(q=1 - alpha, df=self.k ** self.d - 1)
+                valor_c = stats.chi2.ppf(q=1 - alpha, df=self.k ** self.d - 1)
                 if t > valor_c:
                     resp = 'se rechaza la hipótesis'
                 else:
@@ -1110,7 +1110,7 @@ def prueba_correlacion(U,desplazamiento,confianza):
   #Estadístico
     alfa = 1-confianza
     estadistico = estimador_corr/np.sqrt(var_estimador_corr)
-    Z = scipy.stats.norm.ppf(1-alfa/2)
+    Z = stats.norm.ppf(1-alfa/2)
 
     #Prueba de Hipótesis
     if abs(estadistico) < Z:
@@ -1146,7 +1146,7 @@ class frecuencia:
             for i in range(0,self.k):
                 f[i]=acum.count(i+1)
             t=np.sum((f-(self.n/self.k))**2)*(self.k/self.n)
-            valor_c=scipy.stats.chi2.ppf(q=1- alpha, df=self.k-1)
+            valor_c=stats.chi2.ppf(q=1- alpha, df=self.k-1)
             if t>valor_c:
                 resp='se rechaza la hipótesis'
             else:
