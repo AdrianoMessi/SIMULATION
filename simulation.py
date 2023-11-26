@@ -310,7 +310,7 @@ class Numgen:
                     muestra.append(soporte1[i])
         return muestra
 
-    def hyper(N, k, n):    
+    def hyper(N, k, n, m):    
         soporte = []
         for i in range(k+1):
             if i > n:
@@ -329,7 +329,7 @@ class Numgen:
         num = random.random()
 
         muestra = []
-        for _ in range(n):
+        for _ in range(m):
             for i in range(len(probas1)):
                 if num < probas_acum[i]:
                     muestra.append(soporte1[i])
