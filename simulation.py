@@ -1000,7 +1000,7 @@ class Valuacion_Opciones:
         self.T = T
         self.S0 = S0
 
-    def rand(self):
+    def precio(self):
         N = int(self.T/self.dt)
         u = np.exp(self.sigma*np.sqrt(self.dt))
         d = 1/u
@@ -1008,9 +1008,8 @@ class Valuacion_Opciones:
 
         precio = np.zeros(N+1)
         precio[0] = self.S0
-        generador = Bernoulli_distribution(p)
         for i in range(1, N+1):
-            bernoulli = generador.rand()
+            bernoulli = Numgen.bernoulli(p, 1)
             if bernoulli == 1:
                 precio[i] = u*precio[i-1]
             else:
@@ -1025,7 +1024,7 @@ class Valuacion_Opciones:
         X = []
         for i in range(n):
             Y = Valuacion_Opciones(self.r, self.sigma, self.dt, self.T, self.S0)
-            X.append(Y.rand())
+            X.append(Y.precio())
         return np.mean(X)
 
 
