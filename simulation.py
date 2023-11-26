@@ -212,25 +212,34 @@ class Distribuciones:
 
     
 class Numgen:
-    def unif(a, b):
-        lista = [x for x in range(a, b)]
-        return random.choice(lista)
+    def unif(a, b, n):
+        muestra = []
+        for i in range(n):
+            lista = [x for x in range(a, b)]
+            muestra.append(random.choice(lista))
+        return muestra
+        
+    def unif_arbitrario(lista, n):
+        muestra = []
+        for i in range(n):
+            muestra.append(random.choice(lista))
+        return muestra
 
-    def unif_arbitrario(lista):
-        return random.choice(lista)
-
-    def bernoulli(p):
-        num = random.random()
-        if num < p:
-            return 1
-        elif num > p:
-            return 0
-
+    def bernoulli(p, n):
+        muestra = []
+        for _ in range(n):
+            num = random.random()
+            if num < p:
+                muestra.append(1)
+            elif num > p:
+                muestra.append(0)
+                
+        return muestra
+        
     def binomial(n, p):
         soporte = []
         for i in range(n+1):
             soporte.append(i)
-
         probas = []
         for valor in soporte:
             probas.append(Distribuciones.masabinom(n, p, valor))
@@ -241,15 +250,17 @@ class Numgen:
         probas_acum = np.cumsum(probas1)
         num = random.random()
 
-        for i in range(len(probas1)):
-            if num < probas_acum[i]:
-                return soporte1[i]
-                
-            elif i == len(probas1)-1:
-                return soporte1[i]
-                
+        muestra = []
+        for _ in range(N):
+            for i in range(len(probas1)):
+                if num < probas_acum[i]:
+                    muestra.append(soporte1[i])
+                    
+                elif i == len(probas1)-1:
+                    muestra.append(soporte1[i])
+        return muestra
 
-    def geom(p):
+    def geom(p, n):
         soporte = []
         for i in range(100):
             soporte.append(i)
@@ -264,15 +275,18 @@ class Numgen:
         probas_acum = np.cumsum(probas1)
         num = random.random()
 
-        for i in range(len(probas1)):
-            if num < probas_acum[i]:
-                return soporte1[i]
-                
-            elif i == len(probas1)-1:
-                return soporte1[i]
-                
+        
+        muestra = []
+        for _ in range(n):
+            for i in range(len(probas1)):
+                if num < probas_acum[i]:
+                    muestra.append(soporte1[i])
+                    
+                elif i == len(probas1)-1:
+                    muestra.append(soporte1[i])
+        return muestra
 
-    def nbinomial(r, p):
+    def nbinomial(r, p, n):
         soporte = []
         for i in range(100):
             soporte.append(i)
@@ -286,14 +300,15 @@ class Numgen:
 
         probas_acum = np.cumsum(probas1)
         num = random.random()
-
-        for i in range(len(probas1)):
-            if num < probas_acum[i]:
-                return soporte1[i]
-                
-            elif i == len(probas1)-1:
-                return soporte1[i]
-                
+        muestra = []
+        for _ in range(n):
+            for i in range(len(probas1)):
+                if num < probas_acum[i]:
+                    muestra.append(soporte1[i])
+                    
+                elif i == len(probas1)-1:
+                    muestra.append(soporte1[i])
+        return muestra
 
     def hyper(N, k, n):    
         soporte = []
@@ -313,12 +328,15 @@ class Numgen:
         probas_acum = np.cumsum(probas1)
         num = random.random()
 
-        for i in range(len(probas1)):
-            if num < probas_acum[i]:
-                return soporte1[i]
-                
-            elif i == len(probas1)-1:
-                return soporte1[i]
+        muestra = []
+        for _ in range(n):
+            for i in range(len(probas1)):
+                if num < probas_acum[i]:
+                    muestra.append(soporte1[i])
+                    
+                elif i == len(probas1)-1:
+                    muestra.append(soporte1[i])
+        return muestra
                 
                 
 class Orden:
@@ -885,15 +903,15 @@ class poiss_process:
         cont=0
         acm=t1
         lst=[]
-    while acm<=self.t:
-        lst.append(acm)
-        t2=-math.log(random.random())/self.l
-        acm+=t2
-        cont+=1
-    if self.sim_ts==True:
-        return lst
-    else:
-        return cont
+        while acm<=self.t:
+            lst.append(acm)
+            t2=-math.log(random.random())/self.l
+            acm+=t2
+            cont+=1
+        if self.sim_ts==True:
+            return lst
+        else:
+            return cont
     
     def sample(self,n):
         self.sim_ts==False
