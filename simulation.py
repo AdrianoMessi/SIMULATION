@@ -915,10 +915,10 @@ class poiss_process:
     
     def sample(self,n):
         self.sim_ts==False
-        lst=[]
+        lista = []
         for i in range(n):
-            lst.append(self.rand())
-        return lst
+            lista.append(self.rand())
+        return lista
     
 class poiss_nohom:
     def _init_(self,T,max,sim_ts):
@@ -927,28 +927,28 @@ class poiss_nohom:
         self.sim_ts=sim_ts
         
     def rand(self):
-        lst=[]
-        acm=0
-        cont=0
-        while acm<self.T:
+        lista = []
+        acm = 0
+        cont = 0
+        while acm < self.T:
             u=random.random()
             v=random.random()
             t=-math.log(u)/self.max
             if v<t :
                 acm+=t
-                lst.append(t)
+                lista.append(t)
                 cont+=1
         if self.sim_ts==True:
-            return lst
+            return lista
         else:
             return cont
         
     def sample(self,n):
         self.sim_ts==False
-        lst=[]
+        lista=[]
         for i in range(n):
-            lst.append(self.rand())
-        return lst
+            lista.append(self.rand())
+        return lista
     
 class poiss_comp:
     def _init_(self,l,t,s):
@@ -960,10 +960,10 @@ class poiss_comp:
         z=Norm(0,self.s).muestra(n)
         return np.sum(z)
     def sample(self,n):
-        lst=[]
+        lista=[]
         for i in range(n):
-            lst.append(self.rand())
-        return lst
+            lista.append(self.rand())
+        return lista
 
 def wiener(simulaciones, n, t):
     trayectorias = []
