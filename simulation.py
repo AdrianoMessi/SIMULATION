@@ -893,7 +893,7 @@ class SDE:
 
 
 class poiss_process:
-    def _init_(self,l,t,sim_ts):
+    def __init__(self,l,t,sim_ts):
         self.l=l
         self.t=t
         self.sim_ts=sim_ts
@@ -921,7 +921,7 @@ class poiss_process:
         return lista
     
 class poiss_nohom:
-    def _init_(self,T,max,sim_ts):
+    def __init__(self,T,max,sim_ts):
         self.T=T
         self.max=max
         self.sim_ts=sim_ts
@@ -951,7 +951,7 @@ class poiss_nohom:
         return lista
     
 class poiss_comp:
-    def _init_(self,l,t,s):
+    def __init__(self,l,t,s):
         self.l=l
         self.t=t
         self.s=s
