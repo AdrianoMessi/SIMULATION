@@ -236,7 +236,7 @@ class Numgen:
                 
         return muestra
         
-    def binomial(n, p):
+    def binomial(n, p, N):
         soporte = []
         for i in range(n+1):
             soporte.append(i)
