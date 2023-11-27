@@ -4,6 +4,8 @@ import random
 import matplotlib.pyplot as plt
 import time
 from scipy import stats
+import sympy as sp
+
 
 class Congruencial_multiplicativo:
     def __init__(self, x0, b, m):
@@ -97,16 +99,16 @@ class Congruencial_multiplicativo_multiple:
         self.x0_s = np.concatenate((np.array([xi]), self.x0_s))
         return xi/self.m
     
-    def randoms(self):
-        nums = []
-        xi_anterior = self.x00
-        for i in range(self.m - 1):
-            xi = (xi_anterior*self.b) % self.m
-            if xi/self.m in nums: break
+    def randoms(self, N):
+        pseudos = []
+        for i in range(N): 
+            num = Congruencial_multiplicativo_multiple.random(self)
+            if num in pseudos:
+                print(f'Con los datos proporcionados, solo se pudo obtener una muestra de {i} numeros pseudoaleatorios')
+                break
             else: 
-                nums.append(xi/self.m)
-                xi_anterior = xi   # actualizando la x(i-1) 
-        return nums
+                pseudos.append(num)
+        return pseudos
 
     
 class Congruencial_combinado:
@@ -158,42 +160,32 @@ class Congruencial_combinado_multiple:
         self.b2_s = np.array(b2_s)
         self.m1 = m1
         self.m2 = m2
-#         self.x00_s = np.array(x00_s)
-#         self.y00_s = np.array(y00_s)
         
         
     def random(self):
         xi = np.dot(self.x0_s, self.b1_s) % self.m1
         yi = np.dot(self.y0_s, self.b2_s) % self.m2
         zi = (xi - yi) % self.m1
-        
-        
+
         # actualizamos a las xi, yi
         self.x0_s = np.delete(self.x0_s, -1)
         self.x0_s = np.concatenate((np.array([xi]), self.x0_s))
         self.y0_s = np.delete(self.y0_s, -1)
         self.y0_s = np.concatenate((np.array([yi]), self.y0_s))
-
-        
         return zi/self.m1
+
     
-    def randoms(self):
-        nums = []
-        xi_anterior = self.x00
-        yi_anterior = self.y00
-        for i in range(self.m1 - 1):
-            xi = np.dot(xi_anterior, self.b1_s) % self.m1
-            yi = (yi_anterior*self.b2) % self.m2
-            zi = (xi - yi) % self.m1
-            
-            if zi/self.m1 in nums: break
-            else: 
-                nums.append(zi/self.m1)
-                xi_anterior = xi   # actualizando la x(i-1)
-                yi_anterior = yi   # actualizando la y(i-1)
-                
-        return nums
-    
+    def randoms(self, N):
+            pseudos = []
+            for i in range(N): 
+                num = Congruencial_combinado_multiple.random(self)
+                if num in pseudos:
+                    print(f'Con los datos proporcionados, solo se pudo obtener una muestra de {i} numeros pseudoaleatorios')
+                    print(num)
+                    break
+                else: 
+                    pseudos.append(num)
+            return pseudos
     
     
 class Distribuciones:
@@ -246,18 +238,19 @@ class Numgen:
         lista_combinada = list(zip(probas, soporte))
         lista_combinada.sort(key=lambda x: x[0])
         probas1, soporte1 = zip(*lista_combinada)
-
+    
         probas_acum = np.cumsum(probas1)
-        num = random.random()
-
         muestra = []
         for _ in range(N):
+            num = random.random()
             for i in range(len(probas1)):
                 if num < probas_acum[i]:
                     muestra.append(soporte1[i])
-                    
+                    break
+    
                 elif i == len(probas1)-1:
                     muestra.append(soporte1[i])
+                    break
         return muestra
 
     def geom(p, n):
@@ -273,18 +266,19 @@ class Numgen:
         probas1, soporte1 = zip(*lista_combinada)
 
         probas_acum = np.cumsum(probas1)
-        num = random.random()
-
-        
         muestra = []
         for _ in range(n):
+            num = random.random()
             for i in range(len(probas1)):
                 if num < probas_acum[i]:
                     muestra.append(soporte1[i])
-                    
+                    break
+    
                 elif i == len(probas1)-1:
                     muestra.append(soporte1[i])
+                    break
         return muestra
+        
 
     def nbinomial(r, p, n):
         soporte = []
@@ -299,15 +293,17 @@ class Numgen:
         probas1, soporte1 = zip(*lista_combinada)
 
         probas_acum = np.cumsum(probas1)
-        num = random.random()
         muestra = []
         for _ in range(n):
+            num = random.random()
             for i in range(len(probas1)):
                 if num < probas_acum[i]:
                     muestra.append(soporte1[i])
-                    
+                    break
+    
                 elif i == len(probas1)-1:
                     muestra.append(soporte1[i])
+                    break
         return muestra
 
     def hyper(N, k, n, m):    
@@ -326,16 +322,17 @@ class Numgen:
         probas1, soporte1 = zip(*lista_combinada)
 
         probas_acum = np.cumsum(probas1)
-        num = random.random()
-
         muestra = []
         for _ in range(m):
+            num = random.random()
             for i in range(len(probas1)):
                 if num < probas_acum[i]:
                     muestra.append(soporte1[i])
-                    
+                    break
+    
                 elif i == len(probas1)-1:
                     muestra.append(soporte1[i])
+                    break
         return muestra
                 
                 
@@ -738,7 +735,7 @@ class Normacot:
         return z1
     
     def random(self):
-        z = Normacot.Z()
+        z = Normacot.Z(self)
         while abs(z) > self.acot:
             z = Normacot.Z(self)
         return z
@@ -841,7 +838,7 @@ class SDE:
         
         trayectorias = []
         for j in range(n_simulaciones):
-            valores = normal(0, 1).randoms(n)
+            valores = Norm(0, 1).muestra(n)
             proceso = [self.s0]
             valores_dt = [dt]
             s0_sim = self.s0
@@ -870,7 +867,7 @@ class SDE:
         dt = T / n
         trayectorias = []
         for j in range(n_simulaciones):
-            valores = normal(0, 1).randoms(n)
+            valores = Norm(0, 1).muestra(n)
             proceso = [self.s0]
             valores_dt = [dt]
             s0_sim = self.s0
