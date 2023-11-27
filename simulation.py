@@ -1070,132 +1070,6 @@ class ValOpc:
 
 
 
-
-
-class series:
-    def __init__(self, confianza, muestra, d, k):
-        self.d = d
-        self.confianza = confianza
-        self.k = k
-        self.muestra = np.array(muestra)
-        self.n = len(self.muestra)
-    def prueba(self):
-        m = self.n // self.d
- 
-        # Verificamos que el tamaño de m sea el adecuado
-        if (self.k ** self.d) * 10 <= m and m <= (self.k ** self.d) * 100:
-            r = self.n % self.d
- 
-            # Quitamos valores de la muestra para que se pueda cambiar su forma
-            if r != 0:
-                if r == 1:
-                    muest = np.delete(self.muestra, self.n - 1)
-                else:
-                    muest = np.delete(self.muestra, (self.n - 1, self.n - 2))
-                U = np.reshape(muest, (m, self.d))
-            else:
-                U = np.reshape(self.muestra, (m, self.d))
- 
-            # Averiguamos el tamaño de la dimensión
-            # Dimensión 2
-            if self.d == 2:
-                I = np.zeros((self.k, self.k))
-                for i in range(0, m):
-                    I[math.floor(U[i, 0] * self.k), math.floor(self.k * U[i, 1])] += 1
-                F = np.reshape(I, (1, self.k ** self.d))
-                t = np.sum((F - (m / self.k ** self.d)) ** 2) * (self.k ** self.d / m)
-                alpha = 1 - self.confianza
-                valor_c = stats.chi2.ppf(q=1 - alpha, df=self.k ** self.d - 1)
-                if t > valor_c:
-                    resp = 'se rechaza la hipótesis'
-                else:
-                    resp = 'no se rechaza la hipótesis'
-            # Dimensión 3
-            else:
-                I = np.zeros((self.k, self.k, self.k))
-                for i in range(0, m):
-                    I[math.floor(U[i, 0] * self.k), math.floor(self.k * U[i, 1]), math.floor(self.k * U[i, 2])] += 1
-                F = np.reshape(I, (1, self.k ** self.d))
-                t = np.sum((F - (m / self.k ** self.d)) ** 2) * (self.k ** self.d / m)
-                alpha = 1 - self.confianza
-                valor_c = stats.chi2.ppf(q=1 - alpha, df=self.k ** self.d - 1)
-                if t > valor_c:
-                    resp = 'se rechaza la hipótesis'
-                else:
-                    resp = 'no se rechaza la hipótesis'
- 
-        # Caso distinto
-        else:
-            resp = "eliga un tamaño de muestra adecuado"
-            t = "eliga un tamaño de muestra adecuado"
-            valor_c = "eliga un tamaño de muestra adecuado"
- 
-        return resp, t, valor_c
-
-def prueba_correlacion(U,desplazamiento,confianza):
-    n = len(U)
-    h = math.floor((n-1-desplazamiento)/desplazamiento)
-
-    #Estimadores
-    suma = 0
-    for k in range(h+1):
-        suma += U[k*desplazamiento]*U[(k+1)*desplazamiento]
-    estimador_cov = 1/(h+1)*suma-1/4
-    estimador_corr = 12*estimador_cov
-    var_estimador_corr = (13*h+7)/((h+1)**2)
-
-  #Estadístico
-    alfa = 1-confianza
-    estadistico = estimador_corr/np.sqrt(var_estimador_corr)
-    Z = stats.norm.ppf(1-alfa/2)
-
-    #Prueba de Hipótesis
-    if abs(estadistico) < Z:
-        return "No se rechaza H0"
-    else:
-        return "Se rechaza H0"
-
-
-class frecuencia:
-    def __init__(self,confianza,muestra,k):
-        self.conf=confianza
-        self.m=np.array(muestra)
-        self.n=len(self.m)
-        self.k=k
-    def prueba(self):
-        if self.k*10<= self.n and self.n<=self.k*100:
-            alpha=1-self.conf
-            increm=1/self.k
-            f=np.zeros(self.k)
-            acum=[]
-            for i in range(0,self.n):
-                boleano=1
-                interv=0
-                cont=0
-                while boleano==1:
-                    if interv<=self.m[i]<=interv+increm:
-                        boleano=0
-                    else:
-                        boleano=1
-                    interv+=increm
-                cont+=1
-                acum.append(cont)
-            for i in range(0,self.k):
-                f[i]=acum.count(i+1)
-            t=np.sum((f-(self.n/self.k))**2)*(self.k/self.n)
-            valor_c=stats.chi2.ppf(q=1- alpha, df=self.k-1)
-            if t>valor_c:
-                resp='se rechaza la hipótesis'
-            else:
-                resp='no se rechaza la hipótesis'
-        else:
-            resp="eliga un tamaño de muestra adecuado"
-            t="eliga un tamaño de muestra adecuado"
-            valor_c="eliga un tamaño de muestra adecuado"
-        return (resp,t,valor_c)
-
-
-
 class B_S:
     def __init__(self, S_0, K, t_0, T, r, sigma_estimation, data):
         self.S_0 = S_0
@@ -1436,3 +1310,308 @@ class Var_estocastico:
         simulaciones = Norm(mu, sigma2).muestra(n) 
         VaR = np.percentile(simulaciones, 1-confianza)
         return VaR
+
+
+class Poker:
+    def __init__(self, funcion_muestra, confianza, decimales):
+        self.funcion_muestra = funcion_muestra
+        self.n = len(funcion_muestra)
+        self.c = confianza
+        self.dec = decimales
+
+    def prueba(self):
+        for i in range(1, self.dec + 1):
+            A = [0]
+            B = [1]
+            C = [2]
+            D = [3]
+            E = [4]
+            F = [5]
+            G = [6]
+            H = [7]
+            I = [8]
+            J = [9]
+
+            muestras = self.funcion_muestra
+            prueba_dec = i
+            decimales_i = [str(muestra)[prueba_dec + 1] for muestra in muestras]
+            manos = [decimales_i[i] + decimales_i[i + 1] + decimales_i[i + 2] + decimales_i[i + 3] + decimales_i[i + 4]
+         for i in range(0, len(decimales_i), 5)]
+
+            conteos_categorias = {
+                "Corrida": 0,
+                "Poker": 0,
+                "Full": 0,
+                "Tercia": 0,
+                "Dos Pares": 0,
+                "Par": 0,
+                "Ninguna de las categorías": 0
+            }
+
+            resultados_totales = {
+                "Corrida": 0,
+                "Poker": 0,
+                "Full": 0,
+                "Tercia": 0,
+                "Dos Pares": 0,
+                "Par": 0,
+                "Ninguna de las categorías": 0
+            }
+
+            for mano in manos:
+                n = len(mano)
+                lista = [int(mano[i]) for i in range(5) if mano[i].isdigit()]
+
+                if len(lista) == 5:
+                    nums = []
+                    for j in lista:
+                        if j in A:
+                            nums.append("A")
+                        elif j in B:
+                            nums.append("B")
+                        elif j in C:
+                            nums.append("C")
+                        elif j in D:
+                            nums.append("D")
+                        elif j in E:
+                            nums.append("E")
+                        elif j in F:
+                            nums.append("F")
+                        elif j in G:
+                            nums.append("G")
+                        elif j in H:
+                            nums.append("H")
+                        elif j in I:
+                            nums.append("I")
+                        elif j in J:
+                            nums.append("J")
+
+                    resultados = {
+                        "Corrida": 0,
+                        "Poker": 0,
+                        "Full": 0,
+                        "Tercia": 0,
+                        "Dos Pares": 0,
+                        "Par": 0,
+                        "Ninguna de las categorías": 0
+                    }
+
+                    if len(set(nums)) == 1:
+                        resultados["Corrida"] += 1
+                    if any(nums.count(x) == 4 for x in nums):
+                        resultados["Poker"] += 1
+                    elif len(set(nums)) == 2:
+                        resultados["Full"] += 1
+                    elif any(nums.count(x) == 3 for x in nums):
+                        resultados["Tercia"] += 1
+                    elif len(set(nums)) == 3:
+                        resultados["Dos Pares"] += 1
+                    elif any(nums.count(x) == 2 for x in nums):
+                        resultados["Par"] += 1
+                    else:
+                        resultados["Ninguna de las categorías"] += 1
+
+                    for categoria, conteo in resultados.items():
+                        conteos_categorias[categoria] += conteo
+
+            total_manos = len(manos)
+            porcentajes_promedio = {}
+
+            obser = []
+            teor = [0.001, 0.0045, 0.0090, 0.0720, 0.108, 0.504, 0.3024]
+
+            for categoria, conteo in conteos_categorias.items():
+                porcentajes_promedio[categoria] = (conteo / total_manos) * 100
+                obser.append(conteo / total_manos)
+
+            estad = 0
+            for j in range(0, len(obser)):
+                estad += (obser[j] - teor[j]) ** 2 / teor[j]
+
+            valor_c = stats.chi2.ppf(self.c, len(obser) - 1)
+
+            if estad > valor_c:
+                print("Para el decimal {}: NO PASA con un estadístico {} y un valor crítico de {}".format(i, estad, valor_c))
+            else:
+                print("Para el decimal {}: PASA con un estadístico {} y un valor crítico de {}".format(i, estad, valor_c))
+
+
+
+class Correlacion:
+    def __init__(self, U, despl, conf):
+        self.U = U
+        self.despl = despl
+        self.conf = conf 
+        self.n = len(U)
+        self.h = math.floor((self.n - 1 - despl) / despl)
+
+    def calc_estimadores(self):
+        suma = 0
+        for k in range(self.h + 1):
+            suma += self.U[k * self.despl] * self.U[(k + 1) * self.despl]
+
+        est_cov = 1 / (self.h + 1) * suma - 1 / 4
+        est_corr = 12 * est_cov
+        var_est_corr = (13 * self.h + 7) / ((self.h + 1) ** 2)
+
+        return est_corr, var_est_corr
+
+    def prueba(self):
+        alfa = 1 - self.conf
+
+        est_corr, var_est_corr = self.calc_estimadores()
+
+        estad = est_corr / np.sqrt(var_est_corr)
+        Z = stats.norm.ppf(1 - alfa / 2)
+
+        if abs(estad) < Z:
+            print("PASA")
+        else:
+            print("NO PASA")
+
+
+class PruebaChisq:
+    def __init__(self, m, conf, k):
+        self.conf = conf
+        self.m = np.array(m)
+        self.n = len(self.m)
+        self.k = k
+
+    def prueba(self):
+        if self.k * 10 <= self.n and self.n <= self.k * 100:
+            alpha = 1 - self.conf
+            incr = 1 / self.k
+            f = np.zeros(self.k)
+            acum = []
+
+            for i in range(0, self.n):
+                booleano = 1
+                interv = 0
+                cont = 0
+
+                while booleano == 1:
+                    if interv <= self.m[i] <= interv + incr:
+                        booleano = 0
+                    else:
+                        booleano = 1
+                    interv += incr
+                    cont += 1
+
+                acum.append(cont)
+
+            for i in range(0, self.k):
+                f[i] = acum.count(i + 1)
+
+            t = np.sum((f - (self.n / self.k))**2) * (self.k / self.n)
+            valor_c = stats.chi2.ppf(q=1 - alpha, df=self.k - 1)
+
+            if t > valor_c:
+                resp = 'se rechaza la hipotesis.  valor t: ' + str(t) + ' , valor c: ' + str(valor_c)
+            else:
+                resp = 'no se rechaza la hipotesis.  valor t: ' + str(t) + ' , valor c: ' + str(valor_c)
+
+        else:
+            resp = "elija un tamaño de muestra adecuado"
+            t = "elija un tamaño de muestra adecuado"
+            valor_c = "elija un tamaño de muestra adecuado"
+
+        return resp
+
+
+class Corrida:    
+    def __init__ (self, muestra, conf, m):
+        self.muestra = muestra
+        self.c=conf
+        self.m=m
+        
+    def prueba(self):
+        for a in range(0,self.m):
+            X=self.muestra
+            n=len(X)
+            i=0 
+            r=[0,0,0,0,0,0] 
+            c=0 
+            while i<n-1:
+                c=1
+                while i<n-1 and X[i]<X[i+1]:
+                    c+=1
+                    i+=1   
+                if c>5:
+                    r[5]+=1
+                else:
+                    r[c-1]+=1
+                i+=1
+            if X[len(X)-2]>X[len(X)-1]:
+                r[0]+=1
+
+            teor=[n/6,5*n/24,11*n/120,19*n/720,29*n/5040,n/840]
+            a_jk=np.array([[4529.4,9044.9,13568,18091,22615,27892],
+                         [9044.9,18097,27139,36187,45234,55789],
+                         [13568,27139,40721,54281,67852,83685],
+                         [18091,36187,54281,72414,90470,111580],
+                         [22615,45234,67852,90470,113262,139476],
+                         [27892,55789,83685,111580,139476,172860]])
+            estad=0
+            for j in range(0,6):
+                for k in range(0,6):
+                    estad+=a_jk[j,k]*(r[j]-teor[j])*(r[k]-teor[k])
+            estad=estad/n
+
+            valor_c= stats.chi2.ppf(self.c,6)
+            
+            if estad>valor_c:
+                print("Para la muestra {} NO PASA. estadistico de {}, valor critico de {}".format(a+1,estad,valor_c))
+            else:
+                print("Para la muestra {} PASA. estadistico de {}, valor critico de {}".format(a+1,estad,valor_c))
+                
+
+class Series:
+    def __init__(self,confianza,muestra,d,k):
+        self.d=d
+        self.confianza=confianza
+        self.k=k
+        self.muestra=np.array(muestra)
+        self.n=len(self.muestra)
+    def prueba(self):
+        m=self.n//self.d
+
+        if (self.k**self.d)*10<= m and m<=(self.k**self.d)*100:
+            r=self.n%self.d
+
+            if r!=0:
+                if r==1:
+                    muest=np.delete(self.muestra,self.n-1)
+                else:
+                    muest=np.delete(self.muestra,(self.n-1,self.n-2))
+                U=np.reshape(muest,(m,self.d))
+            else:
+                U=np.reshape(self.muestra,(m,self.d))
+            if self.d==2:
+                I=np.zeros((self.k,self.k))
+                for i in range(0,m):
+                    I[math.floor(U[i,0]*self.k),math.floor(self.k*U[i,1])]+=1
+                F=np.reshape(I,(1,self.k**self.d))
+                t=np.sum((F-(m/self.k**self.d))**2)*(self.k**self.d/m)
+                alpha=1-self.confianza
+                valor_c=sc.stats.chi2.ppf(q=1-alpha, df=self.k**self.d-1)
+                if t>valor_c:
+                    resp='se rechaza la hipótesis'
+                else:
+                    resp='no se rechaza la hipótesis'
+            else:
+                I=np.zeros(((self.k,self.k,self.k)))
+                for i in range(0,m):
+                    I[math.floor(U[i,0]*self.k),math.floor(self.k*U[i,1]),math.floor(self.k*U[i,2])]+=1
+                F=np.reshape(I,(1,self.k**self.d))
+                t=np.sum((F-(m/self.k**self.d))**2)*(self.k**self.d/m)
+                alpha=1-self.confianza
+                valor_c=stats.chi2.ppf(q=1-alpha, df=self.k**self.d-1)
+                if t>valor_c:
+                    resp='se rechaza la hipótesis'
+                else:
+                    resp='no se rechaza la hipótesis'
+        else:
+            resp="eliga un tamaño de muestra adecuado"
+            t="eliga un tamaño de muestra adecuado"
+            valor_c="eliga un tamaño de muestra adecuado"
+        return (resp,t,valor_c)
