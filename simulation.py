@@ -11,6 +11,8 @@ from datetime import datetime
 from scipy.stats import poisson
 from scipy.stats import uniform
 
+
+
 class Congruencial_multiplicativo:
     def __init__(self, x0, b, m):
         self.x0 = x0
@@ -191,7 +193,32 @@ class Congruencial_combinado_multiple:
                     pseudos.append(num)
             return pseudos
     
+
+
+class Propio:
+    def __init__(self, x0, b, m):
+        self.x0 = x0
+        self.b = b
+        self.m = m
+        
+    def random(self):
+        xi = (self.x0*self.b) % self.m
+        self.x0 = (time.time() + xi + Congruencial_aditivo(xi, self.b, self.m).random()) 
+        return xi/self.m
     
+    def randoms(self, n):
+        muestra = []
+        for i in range(n):
+            nuevo = Propio.random(self)
+            if nuevo in muestra:
+                print(f'Solo se pudo obtener una muestra de {len(muestra)} numeros pseudoaleatorios')
+                return muestra
+            else:
+                muestra.append(nuevo)
+        return muestra
+
+
+
 class Distribuciones:
     def masabinom(n, p, x):
         return math.comb(n, x) * (p**x) * (1-p)**(n-x)
