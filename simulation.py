@@ -5,7 +5,9 @@ import matplotlib.pyplot as plt
 import time
 from scipy import stats
 import sympy as sp
-
+from scipy.stats import norm
+import pandas as pd
+from datetime import datetime
 
 class Congruencial_multiplicativo:
     def __init__(self, x0, b, m):
@@ -987,9 +989,24 @@ def wiener(simulaciones, n, t):
     plt.grid()
 
 
-
-
-class Valuacion_Opciones:
+class Bernoulli:
+    def __init__ (self,p):
+        self.p=p
+        
+    
+    def numero (self):
+        u=random.random()
+        if u<self.p:
+            return 1
+        else:
+            return 0
+    
+    def lista (self,n):
+        List=[]
+        for i in range (1,n+1):
+            List.append(self.numero())
+        return List
+class ValOpc:
     def __init__(self, r, sigma, dt, T, S0):
         self.r = r
         self.sigma = sigma
@@ -997,7 +1014,7 @@ class Valuacion_Opciones:
         self.T = T
         self.S0 = S0
 
-    def precio(self):
+    def rand(self):
         N = int(self.T/self.dt)
         u = np.exp(self.sigma*np.sqrt(self.dt))
         d = 1/u
@@ -1005,25 +1022,27 @@ class Valuacion_Opciones:
 
         precio = np.zeros(N+1)
         precio[0] = self.S0
+        generador = Bernoulli(0.5)
         for i in range(1, N+1):
-            bernoulli = Numgen.bernoulli(p, 1)
+            bernoulli = generador.numero()
             if bernoulli == 1:
                 precio[i] = u*precio[i-1]
             else:
                 precio[i] = d*precio[i-1]
 
         time = np.cumsum(np.concatenate(([0], [self.dt for i in range(N)])))
+        plt.plot(time, precio, color='red')
         plt.grid()
-        plt.plot(time, precio, color='r')
         return precio[len(precio)-1]
 
     def muestra(self, n):
         X = []
         for i in range(n):
-            Y = Valuacion_Opciones(self.r, self.sigma, self.dt, self.T, self.S0)
-            X.append(Y.precio())
+            Y = ValOpc(self.r, self.sigma, self.dt, self.T, self.S0)
+            X.append(Y.rand())
+        plt.grid()
         return np.mean(X)
-
+    
 
 
 
@@ -1152,5 +1171,234 @@ class frecuencia:
             t="eliga un tamaño de muestra adecuado"
             valor_c="eliga un tamaño de muestra adecuado"
         return (resp,t,valor_c)
+
+
+
+class B_S:
+    def __init__(self, S_0, K, t_0, T, r, sigma_estimation, data):
+        self.S_0 = S_0
+        self.K = K
+        self.t_0 = datetime.strptime(t_0, '%Y-%m-%d')
+        self.T = datetime.strptime(T, '%Y-%m-%d')
+        self.r = r
+        self.sigma_estimation = sigma_estimation
+        self.data = data
+
+    
+    def sigma(self):
+        if self.sigma_estimation == 'hist':
+            return np.std(self.data['Daily Returns'].values, ddof=1)
+        elif self.sigma_estimation == 'density':
+            n_returns = self.data.shape[0] - 1
+            s2 = np.var(self.data[stock_data.columns[-1]].values, ddof=1)
+            s = np.std(self.data[stock_data.columns[-1]].values, ddof=1)
+            E_s2 = ((n_returns - 1)*s2) / (n_returns - 3)
+            return np.sqrt(E_s2)
+        else:
+            raise ValueError('Método de estimación de sigma no válido')
+
+    
+    def call(self, how='single'):
+        if how == 'single':
+            time_until_maturity = (self.T - self.t_0).days / 365.25
+        elif how == 'nel':
+            days = (self.T-self.t_0).days
+            time_until_maturity = np.linspace(days, 0.000001, 100) / 365.25
+        elif how == 'precios':
+            precio_min = self.S_0 - 20
+            precio_max = self.S_0 + 20
+            precios = np.linspace(precio_min, precio_max, 100)
+            time_until_maturity = (self.T - self.t_0).days / 365.25
+            d1 = (np.log(precios/self.K) + (self.r + B_S.sigma(self)**2 /2)*(time_until_maturity)) / (B_S.sigma(self)*np.sqrt(time_until_maturity))
+            d2 = d1 - B_S.sigma(self)*np.sqrt(time_until_maturity)
+            return precios * norm.cdf(d1) - self.K * np.exp(-self.r * time_until_maturity) * norm.cdf(d2)
+        d1 = (np.log(self.S_0/self.K) + (self.r + B_S.sigma(self)**2 /2)*(time_until_maturity)) / (B_S.sigma(self)*np.sqrt(time_until_maturity))
+        d2 = d1 - B_S.sigma(self)*np.sqrt(time_until_maturity)
+        return self.S_0 * norm.cdf(d1) - self.K * np.exp(-self.r * time_until_maturity) * norm.cdf(d2)
+
+    
+    def put(self, how='single'):
+        if how == 'single':
+            time_until_maturity = (self.T - self.t_0).days / 365.25
+        elif how == 'nel':
+            days = (self.T-self.t_0).days
+            time_until_maturity = np.linspace(days, 0.000001, 100) / 365.25
+
+        d1 = np.log((self.S_0/self.K) + (self.r + B_S.sigma(self)/2)*(time_until_maturity)) / (B_S.sigma(self)*np.sqrt(time_until_maturity))
+        d2 = d1 - B_S.sigma(self)*np.sqrt(time_until_maturity)
+        return self.K * np.exp(-self.r * time_until_maturity) * norm.cdf(-d2) - (self.S_0 * norm.cdf(-d1))
+    
+
+    def plot_time(self):
+        prices_call = B_S.call(self, 'nel')
+        prices_put = B_S.put(self, 'nel')
+        days = (self.T-self.t_0).days / 365.25
+        time_until_maturity = np.linspace(days, 0.0, 100)
+        plt.figure(figsize=(15, 9))
+        plt.plot(time_until_maturity, prices_call, label='Call Option')
+        plt.plot(time_until_maturity, prices_put, label='Put Option')
+        plt.xlabel('Time to Maturity (Years)')
+        plt.ylabel('Option Price')
+        plt.title('Black-Scholes Option Pricing Model')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+
+    
+    def plot_prices(self):
+        precios_call = []
+        precios_put = []
+        precio_min = self.S_0 - self.S_0/2
+        precio_max = self.S_0 + self.S_0/2
+        precios = np.linspace(precio_min, precio_max, 100) 
+        for i in precios:
+            precios_call.append(B_S(i, self.K, self.t_0.strftime('%Y-%m-%d'), self.T.strftime('%Y-%m-%d'), self.r, self.sigma_estimation, self.data).call())
+            precios_put.append(B_S(i, self.K, self.t_0.strftime('%Y-%m-%d'), self.T.strftime('%Y-%m-%d'), self.r, self.sigma_estimation, self.data).put())
+        
+        plt.figure(figsize=(15, 9))
+        plt.plot(precios, precios_call, label='Call Option')
+        plt.plot(precios, precios_put, label='Put Option')
+        plt.axvline(self.K, color='red', linestyle='--', label='Strike Price')
+        plt.xlabel('Stock price')
+        plt.ylabel('Option Price')
+        plt.title('Black-Scholes')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+
+    
+    def plot_profit(self):
+        premium = 0.1 * self.S_0
+        precio_min = self.S_0 - 10
+        precio_max = self.S_0 + 30
+        precios = np.linspace(precio_min, precio_max, 100) 
+        plt.figure(figsize=(15, 9))
+        plt.plot(precios, 0*precios, color='black')
+        plt.axvline(self.K, color='red', linestyle='--', label='Strike Price')
+        plt.plot(precios, np.maximum(0, precios - self.K ), label='Call payoff', color='lightblue', linestyle='--')
+        plt.plot(precios, premium - np.maximum(0, precios - self.K), label='Put payoff', color='green')
+        plt.plot(precios, np.maximum(0, precios - self.K ) - premium, label='Call profit', color='blue')
+        plt.plot(precios, -np.maximum(0, precios - self.K), label='Put profit', linestyle='--', color='lightgreen')
+        plt.yticks([premium, -premium], labels=['premium', '- premium'])
+        plt.legend(loc='best', fontsize=15, ncol=1)
+        plt.grid()
+
+
+
+class SAF:
+    def __init__(self,vects,probs):
+        self.vects = vects
+        self.probs = probs
+        self.n = len(self.vects)
+
+    def rand(self):
+        u = random.random()
+        s = 0
+        for i in range (0,self.n):
+            if s <= u <= self.probs[i] + s:
+                return self.vects[i]
+            s+=self.probs[i]
+        
+    def muestra(self,n):
+        v=[]
+        for i in range(0,n):
+            v.append(self.rand())
+        return v
+
+class Linesp:
+    def __init__(self,lamda,miu,horizonte,servidores):
+        self.m=miu
+        self.lam=lamda
+        self.h=horizonte
+        self.s=servidores
+    
+    def tray(self):
+        i=0
+        t=0
+        T=[0]
+        U=[0]
+        C=[0]
+        while t<self.h:
+            T_i=Exp(self.m+self.lam).muestra(1)
+            t+=T_i[0]
+            T.append(T_i[0])
+            if U[i]>0:
+                if U[i]>self.s & U[i]<=2*self.s:
+                    paso=SAF([1,-1],[self.lam/(self.lam+(U[i]-self.s)*self.m),self.m*(U[i]-self.s)/(self.lam+(U[i]-self.s)*self.m)]).muestra(1)[0] 
+                    
+                if U[i]>2*self.s:
+                    paso=SAF([1,-1],[self.lam/(self.lam+(self.s)*self.m),self.m*(self.s)/(self.lam+(self.s)*self.m)]).muestra(1)[0]
+                    
+                if U[i]<=self.s:
+                    paso=SAF([1,-1],[self.lam/(self.lam+self.m),self.m/(self.lam+self.m)]).muestra(1)[0]
+            else:
+                paso=1
+              
+            C.append(paso)
+            U.append(U[i]+paso)
+            i+=1
+        return T,U,C
+
+    def stats(self,tipo):
+        T,U,C=self.tray()
+        ac_1=0
+        con_1=0
+        p_1=0
+        
+        ac_2=0
+        con_2=0
+        p_2=0
+        
+        if tipo=="FIFO":
+            for i in range (0,len(T)):
+                if U[i]>self.s:
+                    ac_1+=T[i]
+                    con_1+=1
+                    
+            if con_1!=0:
+                p_1=ac_1/con_1
+            else:
+                p_1=0
+            
+            for i in range (0,len(T)):
+                if C[i]==-1:
+                    ac_2+=T[i]
+                    con_2+=1
+                    
+            if con_2!=0:
+                p_2=ac_2/con_2
+            else:
+                p_2=0
+        
+        if tipo=="LIFO":
+            L_1=[0]
+            
+            for i in range (0,len(T)):
+                if U[i]>self.s:
+                    L_1.append(T[i])
+                    con_1+=1
+                    
+            L_2=np.cumsum(L_1)
+            
+            for i in range(0,len(L_2)):
+                ac_1+=L_2[i]
+            p1=ac_1/con_1
+            if con_1!=0:
+                p_1=ac_1/con_1
+            else:
+                p_1=0
+            
+            for i in range (0,len(T)):
+                if C[i]==-1:
+                    ac_2+=T[i]
+                    con_2+=1
+                    
+            if con_2!=0:
+                p_2=ac_2/con_2
+            else:
+                p_2=0
+        
+        return ("El tiempo promedio de espera es: {} ".format(p_1),
+                "El tiempo promedio en el servidor es: {}".format(p_2))
 
 
