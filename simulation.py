@@ -8,6 +8,8 @@ import sympy as sp
 from scipy.stats import norm
 import pandas as pd
 from datetime import datetime
+from scipy.stats import poisson
+from scipy.stats import uniform
 
 class Congruencial_multiplicativo:
     def __init__(self, x0, b, m):
@@ -891,80 +893,100 @@ class SDE:
         return trayectorias
 
 
-class poiss_process:
-    def __init__(self,l,t,sim_ts):
-        self.l=l
-        self.t=t
-        self.sim_ts=sim_ts
-        
-    def rand(self):
-        t1=-math.log(random.random())/self.l
-        cont=0
-        acm=t1
-        lista=[]
-        while acm<=self.t:
-            lista.append(acm)
-            t2=-math.log(random.random())/self.l
-            acm+=t2
-            cont+=1
-        if self.sim_ts==True:
-            return lista
-        else:
-            return cont
+class Poisson_homogeneo:
+    def __init__(self, T, dt, lam):
+        self.T = T
+        self.dt = dt
+        self.lam = lam
+
+    def trayectoria(self):
+        m = math.ceil(self.T / self.dt)
+        mt = np.array(0).reshape(1, 1)
+        tiempos = []
+        while True:
+            tiempos.append(Exp(self.lam).random())
+            if sum(tiempos) > self.T:
+                tiempos.pop(-1)
+                break
+        tiempos_buenos = []
+        for g in range(len(tiempos)):
+            tiempos_buenos.append(sum(tiempos[0:g]))
+        tiempos_buenos.append(self.T)
+
+        saltos = np.concatenate((np.array([0]), np.arange(0, len(tiempos))))
+        return tiempos_buenos, saltos
+
+    def simulaciones(self, n):
+        plt.figure(figsize=(10, 5))
+        for i in range(n):
+            x, y = Poisson_homogeneo.trayectoria(self)
+            plt.step(x, y)
+        plt.grid()
+
+
+class Poisson_no_homogeneo:
+    def __init__(self, T, max):
+        self.T = T
+        self.max = max
+
+    def trayectoria(self):
+        mt = np.array(0).reshape(1, 1)
+        times = np.array(0).reshape(1, 1)
+        while float(np.sum(mt)) < self.T:
+            u = uniform(0, 1).rvs()
+            v = uniform(0, 1).rvs()
+            t = -math.log(u) / self.max
+            if v < t:
+                mt = np.concatenate((mt, np.array(t).reshape(1, 1)), axis=0)
+                times = np.concatenate((times, np.array(float(np.sum(mt))).reshape(1, 1)), axis=0)
+        tiempo_saltos = np.concatenate((np.concatenate((times, np.cumsum(mt).reshape(len(mt), 1)), axis=1)[0:len(mt) - 1, :][:, 0], np.array([self.T])))
+        valores_saltos = np.arange(0, len(tiempo_saltos))
+        return tiempo_saltos, valores_saltos
     
-    def sample(self,n):
-        self.sim_ts==False
-        lista = []
-        for i in range(n):
-            lista.append(self.rand())
-
-        return lista
-
-
-class poiss_nohom:
-    def __init__(self,T,max,sim_ts):
-        self.T=T
-        self.max=max
-        self.sim_ts=sim_ts
-        
-    def rand(self):
-        lista = []
-        acm = 0
-        cont = 0
-        while acm < self.T:
-            u=random.random()
-            v=random.random()
-            t=-math.log(u)/self.max
-            if v<t :
-                acm+=t
-                lista.append(t)
-                cont+=1
-        if self.sim_ts==True:
-            return lista
-        else:
-            return cont
-        
-    def sample(self,n):
-        self.sim_ts==False
-        lista=[]
-        for i in range(n):
-            lista.append(self.rand())
-        return lista
     
-class poiss_comp:
-    def __init__(self,l,t,s):
-        self.l=l
-        self.t=t
-        self.s=s
-    def rand(self):
-        n=poiss_process(self.t,self.l,sim_ts=False).rand()
-        z=Norm(0,self.s).muestra(n)
-        return np.sum(z)
-    def sample(self,n):
-        lista=[]
+    def simulaciones(self, n):
+        plt.figure(figsize=(10, 5))
         for i in range(n):
-            lista.append(self.rand())
-        return lista
+            x, y = Poisson_no_homogeneo.trayectoria(self)
+            plt.step(x, y)
+        plt.grid()
+
+
+    
+class Poisson_compuesto:
+    def __init__(self, T, dt, l):
+        self.T = T
+        self.dt = dt
+        self.l = l
+
+    def trayectoria(self):
+        tiempos = []
+        while True:
+            tiempos.append(Exp(self.l).random())
+            if sum(tiempos) > self.T:
+                tiempos.pop(-1)
+                break
+        tiempos_buenos = []
+        for g in range(len(tiempos)):
+            tiempos_buenos.append(sum(tiempos[0:g]))
+        tiempos_buenos.append(self.T)
+        
+        m = math.ceil(self.T / self.dt)
+        mt = np.array(0).reshape(1, 1)
+        tray = np.cumsum(np.array(poisson(self.l * self.dt).rvs(len(tiempos_buenos)-2))).reshape(len(tiempos_buenos)-2, 1)
+        saltoss = np.concatenate((mt, tray), axis=0).ravel()
+        saltos = np.concatenate((np.array([0]),saltoss))
+        return tiempos_buenos, saltos 
+    
+
+    def simulaciones(self, n):
+        plt.figure(figsize=(10, 5))
+        for i in range(n):
+            x, y = Poisson_compuesto.trayectoria(self)
+            plt.step(x, y)
+        plt.grid()
+
+
 
 def wiener(simulaciones, n, t):
     trayectorias = []
@@ -1183,11 +1205,12 @@ class B_S:
         self.r = r
         self.sigma_estimation = sigma_estimation
         self.data = data
+        self.rowss = data.shape[0]
 
     
     def sigma(self):
         if self.sigma_estimation == 'hist':
-            return np.std(self.data['Daily Returns'].values, ddof=1)
+            return np.sqrt(((self.rowss - 1) / self.rowss) * np.var(self.data['Log Returns'].values, ddof=1))
         elif self.sigma_estimation == 'density':
             n_returns = self.data.shape[0] - 1
             s2 = np.var(self.data[stock_data.columns[-1]].values, ddof=1)
@@ -1402,3 +1425,14 @@ class Linesp:
                 "El tiempo promedio en el servidor es: {}".format(p_2))
 
 
+
+class Var_estocastico:
+    def __init__(self, returns):
+        self.returns = returns
+
+    def VaR(self, confianza=0.95, n=10000):
+        mu = np.mean(returns)
+        sigma2 = ((len(returns) - 1) / len(returns)) * np.var(returns)
+        simulaciones = Norm(mu, sigma2).muestra(n) 
+        VaR = np.percentile(simulaciones, 1-confianza)
+        return VaR
